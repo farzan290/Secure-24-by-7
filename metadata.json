@@ -1,0 +1,6 @@
+{
+  "name": "Secure 24 by 7",
+  "description": "Professional Society Security & Gate Management System featuring intelligent access, electronic boom barrier controls, resident authorizations, and Secure AI intelligence.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
