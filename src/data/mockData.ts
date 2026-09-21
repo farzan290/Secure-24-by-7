@@ -16,10 +16,37 @@ import {
   MaintenanceItem,
   AuditLogEntry,
   ShiftHandoverNote,
-  GuardClearanceRecord
+  GuardClearanceRecord,
+  RMPNotification,
+  LivingResident,
+  QRPass
 } from '../types';
 
 export const INITIAL_SOCIETIES: Society[] = [
+  {
+    id: 'soc_aeechs',
+    name: 'Architect Society (AEECHS)',
+    provinceState: 'Federal Capital Territory',
+    city: 'Islamabad',
+    country: 'Pakistan',
+    continent: 'Asia',
+    completeAddress: 'AEECHS Main Sector D-18, Motorway Link Corridor, Islamabad',
+    houseCount: 280,
+    gateCount: 3,
+    guardCount: 8,
+    emergencyContacts: {
+      police: '15 / +92-51-9258112',
+      fire: '16 / +92-51-9258334',
+      ambulance: '1122 / 115',
+      securityChief: '+92-300-4499881 (Maj. Sohail Raza)'
+    },
+    managementContact: '+92-51-4433221 (Admin Secretariat Mon-Sat 9AM-5PM)',
+    ownerName: 'Col. (Retd) R. Jamali',
+    managementPasscode: 'Jamali000117',
+    residentAccessCode: 'aeechsRsdnt10000',
+    securityScore: 96,
+    securityStatus: 'EXCELLENT'
+  },
   {
     id: 'soc_grand_horizon',
     name: 'Grand Horizon Palm Residency',
@@ -39,6 +66,8 @@ export const INITIAL_SOCIETIES: Society[] = [
     },
     managementContact: '+92-21-35889900 (Office Mon-Sat 9AM-6PM)',
     ownerName: 'Malik Zeeshan Tariq',
+    managementPasscode: 'GrandHorizon7777',
+    residentAccessCode: 'grnresedent6776767',
     securityScore: 94,
     securityStatus: 'EXCELLENT'
   },
@@ -60,13 +89,124 @@ export const INITIAL_SOCIETIES: Society[] = [
       securityChief: '+92-321-4455667'
     },
     managementContact: '+92-51-2233445',
-    ownerName: 'Col. (Retd) R. Jamali',
+    ownerName: 'Brig. (Retd) Tariq Niazi',
+    managementPasscode: '12367GreenLuxuryEstatesArmy',
+    residentAccessCode: 'gvle454545',
     securityScore: 89,
     securityStatus: 'GOOD'
   }
 ];
 
+export const SOCIETY_PASSCODES: Record<string, string> = {
+  soc_aeechs: 'Jamali000117',
+  soc_grand_horizon: 'GrandHorizon7777',
+  soc_green_valley: '12367GreenLuxuryEstatesArmy'
+};
+
+export const SOCIETY_RESIDENT_CODES: Record<string, string> = {
+  soc_aeechs: 'aeechsRsdnt10000',
+  soc_grand_horizon: 'grnresedent6776767',
+  soc_green_valley: 'gvle454545'
+};
+
+export function getClientSocietyResidentCode(societyIdOrName: string): string {
+  const q = (societyIdOrName || '').toLowerCase().trim();
+  if (
+    q === 'soc_aeechs' ||
+    q.includes('architect') ||
+    q.includes('aeechs') ||
+    q.includes('aecs')
+  ) {
+    return 'aeechsRsdnt10000';
+  }
+  if (
+    q === 'soc_grand_horizon' ||
+    q.includes('grand') ||
+    q.includes('horizon') ||
+    q.includes('palm')
+  ) {
+    return 'grnresedent6776767';
+  }
+  if (
+    q === 'soc_green_valley' ||
+    q.includes('green') ||
+    q.includes('valley') ||
+    q.includes('luxury')
+  ) {
+    return 'gvle454545';
+  }
+  return '';
+}
+
+export function getClientSocietyPasscode(societyIdOrName: string): string {
+  const q = (societyIdOrName || '').toLowerCase().trim();
+  if (
+    q === 'soc_aeechs' ||
+    q.includes('architect') ||
+    q.includes('aeechs') ||
+    q.includes('aecs') ||
+    q.includes('jamali')
+  ) {
+    return 'Jamali000117';
+  }
+  if (q === 'soc_grand_horizon' || q.includes('horizon')) {
+    return 'GrandHorizon7777';
+  }
+  if (q === 'soc_green_valley' || q.includes('green') || q.includes('valley')) {
+    return '12367GreenLuxuryEstatesArmy';
+  }
+  return 'Jamali000117';
+}
+
 export const INITIAL_GATES: Gate[] = [
+  {
+    id: 'gate_aeechs_1',
+    societyId: 'soc_aeechs',
+    name: 'Gate 1 (AEECHS Main Boulevard)',
+    gateNumber: 1,
+    location: 'North Perimeter - Kashmir Avenue Link',
+    type: 'MAIN',
+    assignedGuardIds: ['guard_aeechs_1', 'guard_aeechs_2'],
+    status: 'ONLINE',
+    barrierState: 'CLOSED',
+    barrierMode: 'SIMULATION',
+    cameraOnline: true,
+    direction: 'TWO_WAY',
+    vehiclesEnteredToday: 184,
+    vehiclesExitedToday: 167
+  },
+  {
+    id: 'gate_aeechs_2',
+    societyId: 'soc_aeechs',
+    name: 'Gate 2 (AEECHS Sector D Gate)',
+    gateNumber: 2,
+    location: 'East Perimeter - Sector D Access Road',
+    type: 'SECONDARY',
+    assignedGuardIds: ['guard_aeechs_3'],
+    status: 'ONLINE',
+    barrierState: 'CLOSED',
+    barrierMode: 'SIMULATION',
+    cameraOnline: true,
+    direction: 'TWO_WAY',
+    vehiclesEnteredToday: 92,
+    vehiclesExitedToday: 85
+  },
+  {
+    id: 'gate_aeechs_3',
+    societyId: 'soc_aeechs',
+    name: 'Gate 3 (AEECHS Executive Club Gate)',
+    gateNumber: 3,
+    location: 'South Perimeter - Officers Enclave',
+    type: 'VIP',
+    assignedGuardIds: ['guard_aeechs_1'],
+    status: 'ONLINE',
+    barrierState: 'CLOSED',
+    barrierMode: 'SIMULATION',
+    cameraOnline: true,
+    direction: 'TWO_WAY',
+    vehiclesEnteredToday: 64,
+    vehiclesExitedToday: 59
+  },
   {
     id: 'gate_1',
     societyId: 'soc_grand_horizon',
@@ -135,11 +275,63 @@ export const INITIAL_GATES: Gate[] = [
 
 export const INITIAL_GUARDS: Guard[] = [
   {
+    id: 'guard_aeechs_1',
+    societyId: 'soc_aeechs',
+    name: 'Subedar (Retd) Muhammad Aslam',
+    badgeNumber: 'SEC-AEE-101',
+    contactNumber: '+92-300-8811224',
+    cnic: '37405-1234567-1',
+    assignedGateId: 'gate_aeechs_1',
+    shift: 'MORNING',
+    dutyStatus: 'ON_DUTY',
+    identityVerified: true,
+    identityDocName: 'AEECHS_SECURITY_DIRECTORATE_CARD_101.enc',
+    attendanceRate: 99.2,
+    incidentsReported: 8,
+    shiftStartTime: '06:00 AM',
+    accessCode: '1101'
+  },
+  {
+    id: 'guard_aeechs_2',
+    societyId: 'soc_aeechs',
+    name: 'Havildar Zulfiqar Ali',
+    badgeNumber: 'SEC-AEE-102',
+    contactNumber: '+92-321-4455668',
+    cnic: '37405-7654321-3',
+    assignedGateId: 'gate_aeechs_1',
+    shift: 'MORNING',
+    dutyStatus: 'ON_DUTY',
+    identityVerified: true,
+    identityDocName: 'AEECHS_GOVT_DOC_VERIFIED_102.enc',
+    attendanceRate: 97.8,
+    incidentsReported: 5,
+    shiftStartTime: '06:00 AM',
+    accessCode: '1102'
+  },
+  {
+    id: 'guard_aeechs_3',
+    societyId: 'soc_aeechs',
+    name: 'Nadeem Shah',
+    badgeNumber: 'SEC-AEE-103',
+    contactNumber: '+92-333-7788992',
+    cnic: '37405-9988771-5',
+    assignedGateId: 'gate_aeechs_2',
+    shift: 'EVENING',
+    dutyStatus: 'ON_DUTY',
+    identityVerified: true,
+    identityDocName: 'AEECHS_SECURITY_BADGE_103.enc',
+    attendanceRate: 98.4,
+    incidentsReported: 3,
+    shiftStartTime: '02:00 PM',
+    accessCode: '1103'
+  },
+  {
     id: 'guard_1',
     societyId: 'soc_grand_horizon',
     name: 'Tariq Mehmood',
     badgeNumber: 'SEC-042',
     contactNumber: '+92-301-5550192',
+    cnic: '42101-1928374-1',
     assignedGateId: 'gate_1',
     shift: 'MORNING',
     dutyStatus: 'ON_DUTY',
@@ -147,7 +339,8 @@ export const INITIAL_GUARDS: Guard[] = [
     identityDocName: 'GOVT_NATIONAL_ID_VERIFIED_7719.enc',
     attendanceRate: 98.5,
     incidentsReported: 14,
-    shiftStartTime: '06:00 AM'
+    shiftStartTime: '06:00 AM',
+    accessCode: '1234'
   },
   {
     id: 'guard_2',
@@ -155,6 +348,7 @@ export const INITIAL_GUARDS: Guard[] = [
     name: 'David Harris',
     badgeNumber: 'SEC-088',
     contactNumber: '+92-302-5558911',
+    cnic: '42101-5566778-9',
     assignedGateId: 'gate_1',
     shift: 'MORNING',
     dutyStatus: 'ON_DUTY',
@@ -162,7 +356,8 @@ export const INITIAL_GUARDS: Guard[] = [
     identityDocName: 'SECURITY_BADGE_DOC_8820.enc',
     attendanceRate: 96.0,
     incidentsReported: 9,
-    shiftStartTime: '06:00 AM'
+    shiftStartTime: '06:00 AM',
+    accessCode: '5678'
   },
   {
     id: 'guard_3',
@@ -170,6 +365,7 @@ export const INITIAL_GUARDS: Guard[] = [
     name: 'Rashid Khan',
     badgeNumber: 'SEC-104',
     contactNumber: '+92-304-5553322',
+    cnic: '42101-3344556-7',
     assignedGateId: 'gate_2',
     shift: 'EVENING',
     dutyStatus: 'ON_DUTY',
@@ -177,7 +373,8 @@ export const INITIAL_GUARDS: Guard[] = [
     identityDocName: 'VERIFIED_LICENSED_GUARD_441.enc',
     attendanceRate: 99.1,
     incidentsReported: 6,
-    shiftStartTime: '02:00 PM'
+    shiftStartTime: '02:00 PM',
+    accessCode: '9012'
   },
   {
     id: 'guard_4',
@@ -185,6 +382,7 @@ export const INITIAL_GUARDS: Guard[] = [
     name: 'Elena Rostova',
     badgeNumber: 'SEC-112',
     contactNumber: '+92-306-5557766',
+    cnic: '42101-8899001-3',
     assignedGateId: 'gate_3',
     shift: 'NIGHT',
     dutyStatus: 'ON_BREAK',
@@ -192,7 +390,8 @@ export const INITIAL_GUARDS: Guard[] = [
     identityDocName: 'OFFICIAL_GUARD_CREDENTIALS_112.enc',
     attendanceRate: 97.4,
     incidentsReported: 18,
-    shiftStartTime: '10:00 PM'
+    shiftStartTime: '10:00 PM',
+    accessCode: '3456'
   }
 ];
 
@@ -234,6 +433,109 @@ export const INITIAL_SHIFT_NOTES: ShiftHandoverNote[] = [
 
 export const INITIAL_HOUSES: House[] = [
   {
+    id: 'house_aeechs_babar_gauri',
+    societyId: 'soc_aeechs',
+    houseNumber: 'House 88-C',
+    block: 'Sector 1 (Officers Block)',
+    street: 'Main Boulevard',
+    ownerName: 'Babar Ghori',
+    residentCount: 1,
+    contactNumber: '+92-300-7766554',
+    alternateContactNumber: '+92-321-7788991 (Family WhatsApp / Secondary)',
+    email: 'babar.ghori@aeechs.pk',
+    cnic: '37405-1234567-1',
+    registeredPlates: ['BG-2026', 'AEE-1122'],
+    emergencyContact: '+92-321-7788990 (Family)',
+    currentVisitorsCount: 0,
+    rmpCode: 'BG-7861',
+    rmpStatus: 'ACTIVE'
+  },
+  {
+    id: 'house_aeechs_101',
+    societyId: 'soc_aeechs',
+    houseNumber: 'House 42-A',
+    block: 'Sector 1 (Officers Block)',
+    street: 'Kashmir Avenue',
+    ownerName: 'Brig. (Retd) Zahid Munir',
+    residentCount: 5,
+    contactNumber: '+92-300-9876541',
+    alternateContactNumber: '+92-321-9988772 (Son Capt. Haroon / WhatsApp)',
+    email: 'zahid.munir@aeechs.pk',
+    registeredPlates: ['AEE-7788', 'ICT-2424'],
+    emergencyContact: '+92-321-9988771 (Son - Capt. Haroon)',
+    currentVisitorsCount: 1,
+    rmpCode: 'ZM-4201',
+    rmpStatus: 'ACTIVE'
+  },
+  {
+    id: 'house_aeechs_102',
+    societyId: 'soc_aeechs',
+    houseNumber: 'House 118',
+    block: 'Sector 2 (Engineers Enclave)',
+    street: 'Pine Boulevard',
+    ownerName: 'Engr. Naveed Akhtar',
+    residentCount: 4,
+    contactNumber: '+92-321-5544332',
+    alternateContactNumber: '+92-300-2233442 (Spouse Mobile / WhatsApp)',
+    email: 'naveed.akhtar@aeechs.pk',
+    registeredPlates: ['LEA-9911'],
+    emergencyContact: '+92-300-2233441 (Spouse)',
+    currentVisitorsCount: 0,
+    rmpCode: 'NA-1180',
+    rmpStatus: 'ACTIVE'
+  },
+  {
+    id: 'house_aeechs_103',
+    societyId: 'soc_aeechs',
+    houseNumber: 'House 75-B',
+    block: 'Sector 3',
+    street: 'Rose Lane',
+    ownerName: 'Dr. Samina Kausar',
+    residentCount: 3,
+    contactNumber: '+92-333-6677889',
+    alternateContactNumber: '+92-334-8899002 (Clinic & Backup Line)',
+    email: 'samina.kausar@aeechs.pk',
+    registeredPlates: ['ISB-4500'],
+    emergencyContact: '+92-334-8899001',
+    currentVisitorsCount: 0,
+    rmpCode: 'SK-7502',
+    rmpStatus: 'ACTIVE'
+  },
+  {
+    id: 'house_aeechs_104',
+    societyId: 'soc_aeechs',
+    houseNumber: 'House 210',
+    block: 'Sector 4',
+    street: 'Margalla View Road',
+    ownerName: 'Malik Farhan Riaz',
+    residentCount: 6,
+    contactNumber: '+92-345-1122334',
+    alternateContactNumber: '+92-301-4455663 (Co-Resident WhatsApp)',
+    email: 'farhan.riaz@aeechs.pk',
+    registeredPlates: ['RPL-8822'],
+    emergencyContact: '+92-301-4455662',
+    currentVisitorsCount: 0,
+    rmpCode: 'MF-2104',
+    rmpStatus: 'ACTIVE'
+  },
+  {
+    id: 'house_aeechs_105',
+    societyId: 'soc_aeechs',
+    houseNumber: 'House 15-C',
+    block: 'Sector 1 (Officers Block)',
+    street: 'Hillcrest Drive',
+    ownerName: 'Chaudhry Waqas Javed',
+    residentCount: 4,
+    contactNumber: '+92-312-3344556',
+    alternateContactNumber: '+92-315-7766555 (Personal Mobile / WhatsApp)',
+    email: 'waqas.javed@aeechs.pk',
+    registeredPlates: ['KHI-7070'],
+    emergencyContact: '+92-315-7766554',
+    currentVisitorsCount: 0,
+    rmpCode: 'WJ-1505',
+    rmpStatus: 'ACTIVE'
+  },
+  {
     id: 'house_101',
     societyId: 'soc_grand_horizon',
     houseNumber: 'Villa 101',
@@ -242,10 +544,13 @@ export const INITIAL_HOUSES: House[] = [
     ownerName: 'Syed Hamza Bukhari',
     residentCount: 4,
     contactNumber: '+92-300-1122334',
+    alternateContactNumber: '+92-300-8877665 (Spouse WhatsApp)',
     email: 'h.bukhari@horizon.res',
     registeredPlates: ['ABC-123', 'LHR-5521'],
     emergencyContact: '+92-300-9988776 (Brother)',
-    currentVisitorsCount: 1
+    currentVisitorsCount: 1,
+    rmpCode: 'HB-1010',
+    rmpStatus: 'ACTIVE'
   },
   {
     id: 'house_102',
@@ -256,10 +561,13 @@ export const INITIAL_HOUSES: House[] = [
     ownerName: 'Dr. Ayesha Siddiqui',
     residentCount: 3,
     contactNumber: '+92-321-7788990',
+    alternateContactNumber: '+92-321-9988776 (Clinic Line / Mobile)',
     email: 'a.siddiqui@clinic.org',
     registeredPlates: ['KHI-9842'],
     emergencyContact: '+92-321-4455112 (Spouse)',
-    currentVisitorsCount: 0
+    currentVisitorsCount: 0,
+    rmpCode: 'AS-1020',
+    rmpStatus: 'ACTIVE'
   },
   {
     id: 'house_104',
@@ -270,10 +578,13 @@ export const INITIAL_HOUSES: House[] = [
     ownerName: 'Mr. Johnathan Vance',
     residentCount: 2,
     contactNumber: '+92-333-5566778',
+    alternateContactNumber: '+92-333-1122334 (Personal Mobile / WhatsApp)',
     email: 'j.vance@techcorp.io',
     registeredPlates: ['XYZ-786'],
     emergencyContact: '+92-333-8899001 (Security Liaison)',
-    currentVisitorsCount: 1
+    currentVisitorsCount: 1,
+    rmpCode: 'JV-1040',
+    rmpStatus: 'ACTIVE'
   },
   {
     id: 'house_205',
@@ -284,10 +595,13 @@ export const INITIAL_HOUSES: House[] = [
     ownerName: 'Chaudhry Nadeem Akram',
     residentCount: 5,
     contactNumber: '+92-345-6677889',
+    alternateContactNumber: '+92-345-9988112 (Co-Resident WhatsApp)',
     email: 'nadeem.akram@textiles.pk',
     registeredPlates: ['ISB-2020', 'ISB-2021'],
     emergencyContact: '+92-345-1122998',
-    currentVisitorsCount: 0
+    currentVisitorsCount: 0,
+    rmpCode: 'NA-2050',
+    rmpStatus: 'ACTIVE'
   },
   {
     id: 'house_301',
@@ -298,14 +612,274 @@ export const INITIAL_HOUSES: House[] = [
     ownerName: 'Engr. Sarah Jenkins',
     residentCount: 3,
     contactNumber: '+92-312-3344556',
+    alternateContactNumber: '+92-312-8877661 (Site Office / WhatsApp)',
     email: 's.jenkins@buildenv.com',
     registeredPlates: ['DXB-4040'],
     emergencyContact: '+92-312-7788112',
-    currentVisitorsCount: 0
+    currentVisitorsCount: 0,
+    rmpCode: 'SJ-3010',
+    rmpStatus: 'ACTIVE'
+  },
+  {
+    id: 'house_gv_101',
+    societyId: 'soc_green_valley',
+    houseNumber: 'Villa 12-A',
+    block: 'Sector Pine 1',
+    street: 'Hill View Corridor',
+    ownerName: 'Brig. (Retd) Tariq Niazi',
+    residentCount: 4,
+    contactNumber: '+92-321-4455667',
+    alternateContactNumber: '+92-300-5566778 (Family WhatsApp)',
+    email: 'tariq.niazi@greenvalley.pk',
+    registeredPlates: ['ISB-9988', 'GV-1201'],
+    emergencyContact: '+92-321-9988112',
+    currentVisitorsCount: 0,
+    rmpCode: 'TN-1201',
+    rmpStatus: 'ACTIVE',
+    societyResidentAccessCode: 'gvle454545'
+  },
+  {
+    id: 'house_gv_102',
+    societyId: 'soc_green_valley',
+    houseNumber: 'Villa 14-B',
+    block: 'Sector Pine 2',
+    street: 'Cedar Ridge Lane',
+    ownerName: 'Dr. Kamran Qureshi',
+    residentCount: 3,
+    contactNumber: '+92-333-8899112',
+    alternateContactNumber: '+92-321-4433221 (Clinic Line / WhatsApp)',
+    email: 'k.qureshi@greenvalley.pk',
+    registeredPlates: ['GV-1402'],
+    emergencyContact: '+92-333-1122334',
+    currentVisitorsCount: 0,
+    rmpCode: 'KQ-1402',
+    rmpStatus: 'ACTIVE',
+    societyResidentAccessCode: 'gvle454545'
   }
 ];
 
 export const INITIAL_VEHICLES: Vehicle[] = [
+  {
+    id: 'veh_aeechs_babar_1',
+    societyId: 'soc_aeechs',
+    plateNumber: 'BG-2026',
+    type: 'CAR',
+    make: 'Honda',
+    model: 'Civic RS Turbo',
+    color: 'Platinum White Pearl',
+    classification: 'RESIDENT',
+    ownerName: 'Babar Gauri',
+    houseNumber: 'House 88-C',
+    contactNumber: '+92-300-7766554',
+    status: 'INSIDE',
+    lastGateId: 'gate_aeechs_1',
+    lastGateName: 'Gate 1 (AECS Main Boulevard)',
+    lastEntryTime: '09:15 AM Today',
+    timeline: [
+      {
+        id: 'evt_bg_1',
+        timestamp: '09:15 AM Today',
+        type: 'ENTRY',
+        gateName: 'Gate 1 (AECS Main Boulevard)',
+        guardName: 'Officer Tariq Mehmood',
+        houseNumber: 'House 88-C',
+        notes: 'Resident RFID tag active'
+      }
+    ]
+  },
+  {
+    id: 'veh_aeechs_1',
+    societyId: 'soc_aeechs',
+    plateNumber: 'AEE-7788',
+    type: 'SUV',
+    make: 'Toyota',
+    model: 'Fortuner 2.8 Sigma 4',
+    color: 'Attitude Black',
+    classification: 'RESIDENT',
+    ownerName: 'Brig. (Retd) Zahid Munir',
+    houseNumber: 'House 42-A',
+    contactNumber: '+92-300-9876541',
+    status: 'INSIDE',
+    lastGateId: 'gate_aeechs_1',
+    lastGateName: 'Gate 1 (AEECHS Main Boulevard)',
+    lastEntryTime: '08:45 AM Today',
+    timeline: [
+      {
+        id: 'evt_aeechs_1',
+        timestamp: '08:45 AM Today',
+        type: 'ENTRY',
+        gateName: 'Gate 1 (AEECHS Main Boulevard)',
+        guardName: 'Subedar (Retd) Muhammad Aslam',
+        houseNumber: 'House 42-A',
+        notes: 'RFID Fast-Track verified automatically'
+      }
+    ]
+  },
+  {
+    id: 'veh_aeechs_2',
+    societyId: 'soc_aeechs',
+    plateNumber: 'ICT-2424',
+    type: 'CAR',
+    make: 'Honda',
+    model: 'Civic Oriel',
+    color: 'Taffeta White',
+    classification: 'RESIDENT',
+    ownerName: 'Brig. (Retd) Zahid Munir',
+    houseNumber: 'House 42-A',
+    contactNumber: '+92-300-9876541',
+    status: 'INSIDE',
+    lastGateId: 'gate_aeechs_1',
+    lastGateName: 'Gate 1 (AEECHS Main Boulevard)',
+    lastEntryTime: '09:10 AM Today',
+    timeline: [
+      {
+        id: 'evt_aeechs_2',
+        timestamp: '09:10 AM Today',
+        type: 'ENTRY',
+        gateName: 'Gate 1 (AEECHS Main Boulevard)',
+        guardName: 'Havildar Zulfiqar Ali',
+        houseNumber: 'House 42-A',
+        notes: 'Resident entry confirmed'
+      }
+    ]
+  },
+  {
+    id: 'veh_aeechs_3',
+    societyId: 'soc_aeechs',
+    plateNumber: 'LEA-9911',
+    type: 'SUV',
+    make: 'Hyundai',
+    model: 'Tucson AWD',
+    color: 'Silver Metallic',
+    classification: 'RESIDENT',
+    ownerName: 'Engr. Naveed Akhtar',
+    houseNumber: 'House 118',
+    contactNumber: '+92-321-5544332',
+    status: 'INSIDE',
+    lastGateId: 'gate_aeechs_1',
+    lastGateName: 'Gate 1 (AEECHS Main Boulevard)',
+    lastEntryTime: '07:50 AM Today',
+    timeline: [
+      {
+        id: 'evt_aeechs_3',
+        timestamp: '07:50 AM Today',
+        type: 'ENTRY',
+        gateName: 'Gate 1 (AEECHS Main Boulevard)',
+        guardName: 'Subedar (Retd) Muhammad Aslam',
+        houseNumber: 'House 118',
+        notes: 'Resident entry confirmed'
+      }
+    ]
+  },
+  {
+    id: 'veh_aeechs_4',
+    societyId: 'soc_aeechs',
+    plateNumber: 'ISB-4500',
+    type: 'SUV',
+    make: 'Kia',
+    model: 'Sportage Alpha',
+    color: 'Clear White',
+    classification: 'RESIDENT',
+    ownerName: 'Dr. Samina Kausar',
+    houseNumber: 'House 75-B',
+    contactNumber: '+92-333-6677889',
+    status: 'OUTSIDE',
+    lastGateId: 'gate_aeechs_2',
+    lastGateName: 'Gate 2 (AEECHS Sector D Gate)',
+    lastExitTime: '08:15 AM Today',
+    timeline: [
+      {
+        id: 'evt_aeechs_4',
+        timestamp: '08:15 AM Today',
+        type: 'EXIT',
+        gateName: 'Gate 2 (AEECHS Sector D Gate)',
+        guardName: 'Nadeem Shah',
+        houseNumber: 'House 75-B'
+      }
+    ]
+  },
+  {
+    id: 'veh_aeechs_5',
+    societyId: 'soc_aeechs',
+    plateNumber: 'RPL-8822',
+    type: 'CAR',
+    make: 'Toyota',
+    model: 'Corolla Altis Grande',
+    color: 'Super White',
+    classification: 'RESIDENT',
+    ownerName: 'Malik Farhan Riaz',
+    houseNumber: 'House 210',
+    contactNumber: '+92-345-1122334',
+    status: 'INSIDE',
+    lastGateId: 'gate_aeechs_1',
+    lastGateName: 'Gate 1 (AEECHS Main Boulevard)',
+    lastEntryTime: '10:05 AM Today',
+    timeline: [
+      {
+        id: 'evt_aeechs_5',
+        timestamp: '10:05 AM Today',
+        type: 'ENTRY',
+        gateName: 'Gate 1 (AEECHS Main Boulevard)',
+        guardName: 'Subedar (Retd) Muhammad Aslam',
+        houseNumber: 'House 210'
+      }
+    ]
+  },
+  {
+    id: 'veh_aeechs_6',
+    societyId: 'soc_aeechs',
+    plateNumber: 'KHI-7070',
+    type: 'SUV',
+    make: 'MG',
+    model: 'HS Exclusive',
+    color: 'Pearl Black',
+    classification: 'RESIDENT',
+    ownerName: 'Chaudhry Waqas Javed',
+    houseNumber: 'House 15-C',
+    contactNumber: '+92-312-3344556',
+    status: 'INSIDE',
+    lastGateId: 'gate_aeechs_1',
+    lastGateName: 'Gate 1 (AEECHS Main Boulevard)',
+    lastEntryTime: '10:30 AM Today',
+    timeline: [
+      {
+        id: 'evt_aeechs_6',
+        timestamp: '10:30 AM Today',
+        type: 'ENTRY',
+        gateName: 'Gate 1 (AEECHS Main Boulevard)',
+        guardName: 'Havildar Zulfiqar Ali',
+        houseNumber: 'House 15-C'
+      }
+    ]
+  },
+  {
+    id: 'veh_aeechs_7',
+    societyId: 'soc_aeechs',
+    plateNumber: 'LHE-5511',
+    type: 'CAR',
+    make: 'Suzuki',
+    model: 'Cultus VXL',
+    color: 'Graphite Grey',
+    classification: 'GUEST',
+    ownerName: 'Farhan Qureshi (Guest of House 42-A)',
+    houseNumber: 'House 42-A',
+    contactNumber: '+92-301-4455669',
+    status: 'INSIDE',
+    lastGateId: 'gate_aeechs_1',
+    lastGateName: 'Gate 1 (AEECHS Main Boulevard)',
+    lastEntryTime: '11:15 AM Today',
+    timeline: [
+      {
+        id: 'evt_aeechs_7',
+        timestamp: '11:15 AM Today',
+        type: 'ENTRY',
+        gateName: 'Gate 1 (AEECHS Main Boulevard)',
+        guardName: 'Subedar (Retd) Muhammad Aslam',
+        houseNumber: 'House 42-A',
+        notes: 'Host Brig. Zahid Munir verified visitor via guard contact'
+      }
+    ]
+  },
   {
     id: 'veh_1',
     societyId: 'soc_grand_horizon',
@@ -480,6 +1054,24 @@ export const INITIAL_VEHICLES: Vehicle[] = [
 
 export const INITIAL_VISITORS: Visitor[] = [
   {
+    id: 'vis_aeechs_1',
+    societyId: 'soc_aeechs',
+    name: 'Farhan Qureshi',
+    phone: '+92-301-4455669',
+    purpose: 'Personal Guest / Lunch Meeting',
+    destinationHouse: 'House 42-A',
+    hostName: 'Brig. (Retd) Zahid Munir',
+    vehiclePlate: 'LHE-5511',
+    entryGateId: 'gate_aeechs_1',
+    entryGateName: 'Gate 1 (AEECHS Main Boulevard)',
+    entryTime: '11:15 AM Today',
+    status: 'INSIDE',
+    passCode: 'AEE-99120',
+    qrCodeData: 'SEC247-PASS-AEE99120-HOUSE42A-FARHAN',
+    approvalStatus: 'APPROVED',
+    guardName: 'Subedar (Retd) Muhammad Aslam'
+  },
+  {
     id: 'vis_1',
     societyId: 'soc_grand_horizon',
     name: 'Bilal Farooq',
@@ -577,6 +1169,19 @@ export const INITIAL_SERVICE_WORKERS: ServiceWorker[] = [
 ];
 
 export const INITIAL_ALERTS: SecurityAlert[] = [
+  {
+    id: 'alt_aeechs_1',
+    societyId: 'soc_aeechs',
+    title: 'AEECHS Perimeter Sensor System Normal',
+    description: 'Automated ANPR optical integrity and loop sensors verified operational across Gate 1 and Gate 2.',
+    severity: 'INFORMATIONAL',
+    timestamp: '07:00 AM Today',
+    category: 'BARRIER_ERROR',
+    gateId: 'gate_aeechs_1',
+    gateName: 'Gate 1 (AEECHS Main Boulevard)',
+    status: 'RESOLVED',
+    assignedTo: 'Subedar (Retd) Muhammad Aslam'
+  },
   {
     id: 'alt_1',
     societyId: 'soc_grand_horizon',
@@ -1008,6 +1613,69 @@ export const INITIAL_CLEARANCE_RECORDS: GuardClearanceRecord[] = [
   }
 ];
 
+export const INITIAL_RMP_NOTIFICATIONS: RMPNotification[] = [
+  {
+    id: 'rmp_aeechs_tariq_aslam',
+    societyId: 'soc_aeechs',
+    residentHouseId: 'house_aeechs_babar_gauri',
+    residentHouseNumber: 'House 88-C',
+    residentName: 'Babar Gauri',
+    residentPhone: '+92-300-7766554',
+    type: 'GUEST',
+    status: 'UPCOMING',
+    createdAt: '2026-09-15 02:30 PM',
+    fullName: 'Tariq Aslam',
+    nic: '35202-8472910-1',
+    phone: '+92-300-4455667',
+    vehiclePlate: 'LEA-2024',
+    purpose: 'Personal Guest / Family Dinner',
+    subCategory: 'Family Guest',
+    expectedDate: new Date().toISOString().split('T')[0],
+    expectedTime: '08:00 PM',
+    additionalNotes: 'Driving dark grey Honda Civic. Please allow direct passage to House 88-C driveway.'
+  },
+  {
+    id: 'rmp_aeechs_service_ac',
+    societyId: 'soc_aeechs',
+    residentHouseId: 'house_aeechs_101',
+    residentHouseNumber: 'House 42-A',
+    residentName: 'Brig. (Retd) Zahid Munir',
+    residentPhone: '+92-300-9876541',
+    type: 'SERVICE_STAFF',
+    status: 'UPCOMING',
+    createdAt: '2026-09-15 01:15 PM',
+    fullName: 'Rashid Mehmood',
+    nic: '61101-1234567-3',
+    phone: '+92-321-8899002',
+    vehiclePlate: 'ICT-5511',
+    purpose: 'Master Bedroom Inverter AC Servicing & Filter Cleaning',
+    subCategory: 'AC Technician',
+    expectedDate: new Date().toISOString().split('T')[0],
+    expectedTime: '05:30 PM',
+    additionalNotes: 'Authorized tool kits and vacuum cylinder in vehicle trunk.'
+  },
+  {
+    id: 'rmp_horizon_foodpanda',
+    societyId: 'soc_grand_horizon',
+    residentHouseId: 'house_101',
+    residentHouseNumber: 'Villa 101',
+    residentName: 'Syed Hamza Bukhari',
+    residentPhone: '+92-300-1122334',
+    type: 'DELIVERY',
+    status: 'UPCOMING',
+    createdAt: '2026-09-15 03:00 PM',
+    fullName: 'Muhammad Bilal (FoodPanda Rider)',
+    phone: '+92-311-2233445',
+    vehiclePlate: 'KHI-4421',
+    purpose: 'Food Delivery Order',
+    subCategory: 'Food Delivery',
+    orderReference: '#FP-99482',
+    expectedDate: new Date().toISOString().split('T')[0],
+    expectedTime: '07:30 PM',
+    additionalNotes: 'Hot food delivery, please grant swift 15-minute gate clearance.'
+  }
+];
+
 export const mockSocieties = INITIAL_SOCIETIES;
 export const mockGates = INITIAL_GATES;
 export const mockGuards = INITIAL_GUARDS;
@@ -1021,3 +1689,248 @@ export const mockHouses = INITIAL_HOUSES;
 export const mockShiftNotes = INITIAL_SHIFT_NOTES;
 export const mockAuditLogs = INITIAL_AUDIT_LOGS;
 export const mockClearanceRecords = INITIAL_CLEARANCE_RECORDS;
+export const mockRmpNotifications = INITIAL_RMP_NOTIFICATIONS;
+
+export const INITIAL_LIVING_RESIDENTS: LivingResident[] = [
+  {
+    id: 'lres_haroon_munir',
+    societyId: 'soc_aeechs',
+    houseId: 'house_aeechs_101',
+    houseNumber: 'House 42-A',
+    mainResidentId: 'house_aeechs_101',
+    mainResidentName: 'Brig. (Retd) Zahid Munir',
+    fullName: 'Capt. Haroon Munir',
+    relationship: 'Son',
+    dateOfBirth: '1996-11-20',
+    age: 29,
+    isUnder18: false,
+    gender: 'MALE',
+    phone: '+92-321-9988772',
+    emergencyContact: '+92-300-9876541 (Father)',
+    cnic: '37405-3819203-7',
+    qrPassId: 'SEC247-RES-HM42A',
+    qrToken: 'TOKEN-RES-HM-42A',
+    qrStatus: 'ACTIVE',
+    status: 'ACTIVE',
+    createdAt: '2026-01-12T09:00:00Z'
+  },
+  {
+    id: 'lres_ayesha_tariq',
+    societyId: 'soc_aeechs',
+    houseId: 'house_aeechs_103',
+    houseNumber: 'Villa 104',
+    mainResidentId: 'house_aeechs_103',
+    mainResidentName: 'Dr. Tariq Mahmood',
+    fullName: 'Ayesha Tariq',
+    relationship: 'Daughter',
+    dateOfBirth: '2010-09-05',
+    age: 15,
+    isUnder18: true,
+    gender: 'FEMALE',
+    phone: '+92-300-1122998 (Guardian)',
+    emergencyContact: '+92-300-1122998 (Father Dr. Tariq)',
+    cnic: undefined,
+    residentCode: 'AYT-19042',
+    qrPassId: 'SEC247-RES-AYT19042',
+    qrToken: 'TOKEN-RES-AYT-104',
+    qrStatus: 'ACTIVE',
+    status: 'ACTIVE',
+    createdAt: '2026-01-15T11:00:00Z'
+  }
+];
+
+export const INITIAL_QR_PASSES: QRPass[] = [
+  {
+    id: 'SEC247-PASS-GP849102',
+    secureToken: 'TOKEN-GP-849102-V104',
+    societyId: 'soc_aeechs',
+    passType: 'GUEST',
+    entityType: 'VISITOR',
+    holderName: 'Bilal Farooq',
+    holderPhone: '+92-300-8811223',
+    hostResidentId: 'house_aeechs_103',
+    hostResidentName: 'Dr. Tariq Mahmood',
+    houseNumber: 'Villa 104',
+    purpose: 'Personal Visit / Dinner',
+    vehiclePlate: 'ISB-9988',
+    validFrom: '2026-09-18',
+    validUntil: '2026-09-18',
+    expiryTime: '23:00',
+    status: 'ACTIVE',
+    isSingleUse: true,
+    scanCount: 0,
+    createdAt: '2026-09-18T10:00:00Z',
+    createdBy: 'Dr. Tariq Mahmood (Resident via RMP)',
+    history: [
+      {
+        timestamp: '2026-09-18T10:00:00Z',
+        action: 'CREATED',
+        gate: 'RMP Portal',
+        guard: 'System',
+        result: 'Pass generated with secure token',
+        notes: 'Pre-authorized guest pass for Bilal Farooq'
+      }
+    ]
+  },
+  {
+    id: 'SEC247-PASS-BABAR-GHORI',
+    secureToken: 'TOKEN-RES-BABAR-GHORI-88C',
+    societyId: 'soc_aeechs',
+    passType: 'RESIDENT',
+    entityType: 'RESIDENT',
+    entityId: 'house_aeechs_babar_gauri',
+    holderName: 'Babar Ghori',
+    holderPhone: '+92-300-7766554',
+    hostResidentId: 'house_aeechs_babar_gauri',
+    hostResidentName: 'Babar Ghori',
+    houseNumber: 'House 88-C',
+    purpose: 'Primary Resident Gate Access Clearance',
+    vehiclePlate: 'BG-2026',
+    validFrom: '2026-01-01',
+    validUntil: '2030-12-31',
+    expiryTime: '23:59',
+    status: 'ACTIVE',
+    isSingleUse: false,
+    scanCount: 32,
+    lastScannedAt: '2026-09-19T18:40:00Z',
+    lastScannedGate: 'Main Gate (North Boulevard)',
+    lastScannedGuard: 'Subedar (Retd) Muhammad Akram',
+    createdAt: '2026-01-05T10:00:00Z',
+    createdBy: 'Society Management Registry',
+    history: [
+      {
+        timestamp: '2026-01-05T10:00:00Z',
+        action: 'CREATED',
+        gate: 'Admin Console',
+        guard: 'Society Admin',
+        result: 'Permanent resident QR pass generated for Primary Resident Babar Ghori',
+        notes: 'CNIC 37405-1234567-1 linked with House 88-C'
+      }
+    ]
+  },
+  {
+    id: 'SEC247-DEL-FP4912',
+    secureToken: 'TOKEN-DEL-FP-4912',
+    societyId: 'soc_aeechs',
+    passType: 'DELIVERY',
+    entityType: 'DELIVERY',
+    holderName: 'FoodPanda Courier (Kamran Ali)',
+    holderPhone: '+92-321-4455667',
+    hostResidentId: 'house_aeechs_babar_gauri',
+    hostResidentName: 'Babar Ghori',
+    houseNumber: 'House 88-C',
+    purpose: 'Food Delivery Order #FP-9901',
+    vehiclePlate: 'ICT-RI-8821',
+    validFrom: '2026-09-18',
+    validUntil: '2026-09-18',
+    expiryTime: '21:30',
+    status: 'ACTIVE',
+    isSingleUse: true,
+    scanCount: 0,
+    createdAt: '2026-09-18T18:00:00Z',
+    createdBy: 'Babar Ghori (RMP Pass)',
+    history: [
+      {
+        timestamp: '2026-09-18T18:00:00Z',
+        action: 'CREATED',
+        gate: 'RMP Portal',
+        guard: 'System',
+        result: 'Digital Delivery Pass Authorized'
+      }
+    ]
+  },
+  {
+    id: 'SEC247-SRV-EL7732',
+    secureToken: 'TOKEN-SRV-EL-7732',
+    societyId: 'soc_aeechs',
+    passType: 'SERVICE_STAFF',
+    entityType: 'SERVICE_STAFF',
+    holderName: 'Rashid Mehmood (Electrician)',
+    holderPhone: '+92-333-8877665',
+    hostResidentId: 'house_aeechs_101',
+    hostResidentName: 'Brig. (Retd) Zahid Munir',
+    houseNumber: 'House 42-A',
+    purpose: 'UPS & Generator Maintenance',
+    vehiclePlate: 'RWP-EL-401',
+    validFrom: '2026-09-18',
+    validUntil: '2026-09-18',
+    expiryTime: '18:00',
+    status: 'ACTIVE',
+    isSingleUse: true,
+    scanCount: 0,
+    createdAt: '2026-09-18T09:00:00Z',
+    createdBy: 'Brig. (Retd) Zahid Munir',
+    history: []
+  },
+  {
+    id: 'SEC247-SOC-SW3301',
+    secureToken: 'TOKEN-SOC-SW-3301',
+    societyId: 'soc_aeechs',
+    passType: 'SOCIAL_WORKER',
+    entityType: 'SOCIAL_WORKER',
+    holderName: 'Fatima Noor (Polio Health Team)',
+    holderPhone: '+92-345-6677889',
+    hostResidentId: 'house_aeechs_babar_gauri',
+    hostResidentName: 'Babar Ghori',
+    houseNumber: 'Sector 1 Community',
+    purpose: 'District Health Child Immunization',
+    validFrom: '2026-09-18',
+    validUntil: '2026-09-18',
+    expiryTime: '17:00',
+    status: 'ACTIVE',
+    isSingleUse: false,
+    scanCount: 1,
+    createdAt: '2026-09-18T08:00:00Z',
+    createdBy: 'Society Executive Office',
+    history: []
+  },
+  {
+    id: 'SEC247-PASS-EXP001',
+    secureToken: 'TOKEN-EXP-001',
+    societyId: 'soc_aeechs',
+    passType: 'GUEST',
+    entityType: 'VISITOR',
+    holderName: 'Tariq Shah',
+    holderPhone: '+92-300-1122334',
+    hostResidentId: 'house_aeechs_babar_gauri',
+    hostResidentName: 'Babar Ghori',
+    houseNumber: 'House 88-C',
+    purpose: 'Evening Meeting',
+    validFrom: '2026-09-10',
+    validUntil: '2026-09-10',
+    expiryTime: '20:00',
+    status: 'EXPIRED',
+    isSingleUse: true,
+    scanCount: 1,
+    createdAt: '2026-09-10T14:00:00Z',
+    createdBy: 'Babar Ghori'
+  },
+  {
+    id: 'SEC247-PASS-RVK002',
+    secureToken: 'TOKEN-RVK-002',
+    societyId: 'soc_aeechs',
+    passType: 'GUEST',
+    entityType: 'VISITOR',
+    holderName: 'Hamza Malik (Revoked)',
+    holderPhone: '+92-302-9988112',
+    hostResidentId: 'house_aeechs_babar_gauri',
+    hostResidentName: 'Babar Ghori',
+    houseNumber: 'House 88-C',
+    purpose: 'Visit Cancelled by Host',
+    validFrom: '2026-09-18',
+    validUntil: '2026-09-18',
+    expiryTime: '22:00',
+    status: 'REVOKED',
+    isSingleUse: true,
+    scanCount: 0,
+    revokedAt: '2026-09-18T14:30:00Z',
+    revokedBy: 'Babar Ghori (Host Resident via RMP)',
+    revocationReason: 'Guest called to reschedule visit for next week',
+    createdAt: '2026-09-18T11:00:00Z',
+    createdBy: 'Babar Ghori'
+  }
+];
+
+export const mockLivingResidents = INITIAL_LIVING_RESIDENTS;
+export const mockQrPasses = INITIAL_QR_PASSES;
+

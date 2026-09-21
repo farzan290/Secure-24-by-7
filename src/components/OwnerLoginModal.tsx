@@ -185,14 +185,6 @@ export const OwnerLoginModal: React.FC<Props> = ({
             </div>
           </div>
 
-          {/* Quick Demo Helper Hint */}
-          <div className="p-2.5 rounded bg-amber-950/30 border border-amber-900/40 text-[11px] text-amber-300/80 flex items-center justify-between">
-            <span>Default configured secret:</span>
-            <code className="bg-amber-950/80 px-2 py-0.5 rounded text-amber-200 font-mono text-[10px]">
-              OwnerMaster2026!
-            </code>
-          </div>
-
           {/* Submit */}
           <button
             id="btn-submit-owner-login"

@@ -1,4 +1,4 @@
-export type Role = 'GUARD' | 'MANAGEMENT' | 'OWNER';
+export type Role = 'GUARD' | 'MANAGEMENT' | 'OWNER' | 'RMP';
 
 export type GateStatus = 'ONLINE' | 'OFFLINE' | 'MAINTENANCE';
 export type BarrierState = 'CLOSED' | 'OPENING' | 'OPEN' | 'CLOSING' | 'ERROR' | 'OFFLINE';
@@ -27,6 +27,7 @@ export interface Guard {
   name: string;
   badgeNumber: string;
   contactNumber: string;
+  cnic?: string;
   assignedGateId: string;
   shift: 'MORNING' | 'EVENING' | 'NIGHT' | 'CUSTOM';
   dutyStatus: 'ON_DUTY' | 'OFF_DUTY' | 'ON_BREAK';
@@ -35,6 +36,7 @@ export interface Guard {
   attendanceRate: number;
   incidentsReported: number;
   shiftStartTime: string;
+  accessCode: string;
 }
 
 export interface ShiftHandoverNote {
@@ -58,10 +60,19 @@ export interface House {
   ownerName: string;
   residentCount: number;
   contactNumber: string;
+  alternateContactNumber?: string;
   email: string;
   registeredPlates: string[];
   emergencyContact: string;
   currentVisitorsCount: number;
+  cnic?: string;
+  rmpCode?: string;
+  rmpStatus?: 'ACTIVE' | 'DEACTIVATED';
+  societyResidentAccessCode?: string;
+  vehicleMake?: string;
+  vehicleModel?: string;
+  vehicleColor?: string;
+  livingResidents?: LivingResident[];
 }
 
 export type VehicleClassification = 'RESIDENT' | 'GUEST' | 'DELIVERY' | 'SERVICE' | 'UNKNOWN' | 'WATCHLIST';
@@ -78,6 +89,7 @@ export interface Vehicle {
   ownerName: string;
   houseNumber: string;
   contactNumber?: string;
+  alternateContactNumber?: string;
   status: 'INSIDE' | 'OUTSIDE';
   lastGateId?: string;
   lastGateName?: string;
@@ -102,6 +114,7 @@ export interface Visitor {
   societyId: string;
   name: string;
   phone: string;
+  cnic?: string;
   purpose: string;
   destinationHouse: string;
   hostName: string;
@@ -215,6 +228,8 @@ export interface Society {
   };
   managementContact: string;
   ownerName: string;
+  managementPasscode?: string;
+  residentAccessCode?: string;
   logoUrl?: string;
   securityScore: number;
   securityStatus: 'EXCELLENT' | 'GOOD' | 'ATTENTION_NEEDED';
@@ -309,3 +324,155 @@ export interface GuardClearanceRecord {
   actionTaken: string;
   notes?: string;
 }
+
+export type RMPNotificationType =
+  | 'GUEST'
+  | 'DELIVERY'
+  | 'SERVICE_STAFF'
+  | 'SOCIAL_WORKER'
+  | 'RESIDENT'
+  | 'OTHER';
+
+export type RMPNotificationStatus =
+  | 'UPCOMING'
+  | 'ARRIVED'
+  | 'INSIDE_SOCIETY'
+  | 'EXITED'
+  | 'EXPIRED'
+  | 'CANCELLED';
+
+export interface RMPNotification {
+  id: string;
+  societyId: string;
+  residentHouseId: string;
+  residentHouseNumber: string;
+  residentName: string;
+  residentPhone: string;
+  type: RMPNotificationType;
+  status: RMPNotificationStatus;
+  createdAt: string;
+  updatedAt?: string;
+
+  // Guest / Courier / Staff details
+  fullName: string;
+  nic?: string;
+  phone?: string;
+  vehiclePlate?: string;
+
+  // Purpose / Categories
+  purpose: string;
+  subCategory?: string;
+  orderReference?: string;
+
+  // Scheduled timing
+  expectedDate: string; // YYYY-MM-DD
+  expectedTime: string; // e.g. "07:30 PM" or "19:30"
+  additionalNotes?: string;
+
+  // Gate check-in audit
+  admittedAt?: string;
+  exitedAt?: string;
+  processedByGuardName?: string;
+  processedGateName?: string;
+}
+
+export interface LivingResident {
+  id: string;
+  societyId: string;
+  houseId: string;
+  houseNumber: string;
+  mainResidentId: string;
+  mainResidentName: string;
+  fullName: string;
+  relationship: string;
+  dateOfBirth: string; // YYYY-MM-DD
+  age: number;
+  isUnder18: boolean;
+  gender?: 'MALE' | 'FEMALE' | 'OTHER';
+  phone?: string;
+  emergencyContact?: string;
+  cnic?: string; // For 18+
+  residentCode?: string; // For Under 18 e.g. "ZYG-48291"
+  qrPassId?: string;
+  qrToken?: string;
+  qrStatus?: 'ACTIVE' | 'REVOKED' | 'SUSPENDED';
+  status: 'ACTIVE' | 'INACTIVE';
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export type QRPassType =
+  | 'GUEST'
+  | 'DELIVERY'
+  | 'SERVICE_STAFF'
+  | 'SOCIAL_WORKER'
+  | 'RESIDENT'
+  | 'LIVING_RESIDENT'
+  | 'OTHER';
+
+export type QRPassStatus =
+  | 'ACTIVE'
+  | 'EXPIRED'
+  | 'REVOKED'
+  | 'USED'
+  | 'INACTIVE';
+
+export interface QRPassHistoryEntry {
+  timestamp: string;
+  action: 'CREATED' | 'SCANNED' | 'APPROVED' | 'DENIED' | 'REVOKED' | 'EXPIRED' | 'EXITED';
+  gate: string;
+  guard: string;
+  result: string;
+  notes?: string;
+}
+
+export interface QRPass {
+  id: string; // e.g. "SEC247-PASS-GP849102"
+  secureToken: string;
+  societyId: string;
+  passType: QRPassType;
+  entityType: 'VISITOR' | 'RESIDENT' | 'LIVING_RESIDENT' | 'DELIVERY' | 'SERVICE_STAFF' | 'SOCIAL_WORKER' | 'OTHER';
+  entityId?: string;
+  holderName: string;
+  holderPhone?: string;
+  hostResidentId?: string;
+  hostResidentName?: string;
+  houseId?: string;
+  houseNumber: string;
+  purpose: string;
+  vehiclePlate?: string;
+  validFrom: string; // YYYY-MM-DD or ISO
+  validUntil: string; // YYYY-MM-DD or ISO
+  expiryTime?: string; // e.g. "22:00"
+  status: QRPassStatus;
+  isSingleUse?: boolean;
+  scanCount: number;
+  lastScannedAt?: string;
+  lastScannedGate?: string;
+  lastScannedGuard?: string;
+  createdAt: string;
+  createdBy: string;
+  revokedAt?: string;
+  revokedBy?: string;
+  revocationReason?: string;
+  entryRecordedAt?: string;
+  exitRecordedAt?: string;
+  residentCode?: string;
+  isUnder18?: boolean;
+  age?: number;
+  history?: QRPassHistoryEntry[];
+}
+
+export type VerificationResultStatus =
+  | 'VERIFIED RESIDENT'
+  | 'VERIFIED GUEST'
+  | 'VERIFIED DELIVERY'
+  | 'VERIFIED SERVICE STAFF'
+  | 'VERIFICATION REQUIRED'
+  | 'UNKNOWN PERSON'
+  | 'UNKNOWN VEHICLE'
+  | 'QR PASS EXPIRED'
+  | 'QR PASS REVOKED'
+  | 'INVALID RESIDENT CODE'
+  | 'WATCHLIST MATCH — VERIFY BEFORE ACCESS';
+
