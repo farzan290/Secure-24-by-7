@@ -46,8 +46,17 @@ import { OwnerDashboard } from './components/OwnerDashboard';
 import { ResidentMessagesPortal } from './components/ResidentMessagesPortal';
 import { ResidentApprovalDialog } from './components/ResidentApprovalDialog';
 import { SecurityMusicPlayer } from './components/SecurityMusicPlayer';
+import {
+  useLanguage,
+  SUPPORTED_LANGUAGES,
+  SUPPORTED_COUNTRIES,
+  LanguageCode
+} from './services/i18n';
+import { Globe, Languages } from 'lucide-react';
 
 export function App() {
+  const { language, languageOption, country, setLanguage, setCountryByCode, t, tr } = useLanguage();
+
   // Navigation & Role Authentication
   const [currentRole, setCurrentRole] = useState<Role | null>(null);
   const [showGuardModal, setShowGuardModal] = useState(false);
@@ -517,7 +526,70 @@ export function App() {
   const currentGate = scopedGates.find(g => g.id === selectedGateId) || scopedGates[0] || gates[0];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-cyan-500 selection:text-white">
+    <div
+      dir={languageOption.dir}
+      className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-cyan-500 selection:text-white"
+    >
+      {/* GLOBAL PORTAL COUNTRY & 7-LANGUAGE SWITCHER BAR (Visible inside Guard, Management, Owner, RMP & Society Portals) */}
+      {(currentRole || isViewingSocietyPage) && (
+        <div className="bg-slate-950/95 border-b border-cyan-900/50 px-4 py-2 flex flex-wrap items-center justify-between gap-2 text-xs z-40 relative">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-mono font-bold text-cyan-400 uppercase">
+              {t.appTitle}
+            </span>
+            <span className="text-slate-600">•</span>
+            <span className="font-semibold text-white">
+              {tr(activeSociety.name)} ({tr(activeSociety.city)})
+            </span>
+            <span className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-[11px] font-mono text-emerald-300">
+              {country.flag} {country.name} • {languageOption.flag} {languageOption.nativeName}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Country Selector */}
+            <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-lg px-2 py-1">
+              <Globe className="w-3.5 h-3.5 text-cyan-400" />
+              <select
+                aria-label={t.selectCountry}
+                value={country.code}
+                onChange={(e) => {
+                  setCountryByCode(e.target.value, false);
+                  soundEngine.playSuccessChime();
+                }}
+                className="bg-transparent text-slate-200 text-[11px] font-medium focus:outline-none cursor-pointer"
+              >
+                {SUPPORTED_COUNTRIES.map((c) => (
+                  <option key={c.code} value={c.code} className="bg-slate-900 text-white">
+                    {c.flag} {c.name} ({c.dialCode})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* 7 International Languages Quick Pills */}
+            <div className="flex items-center gap-1 bg-slate-900 border border-cyan-800/60 rounded-lg px-2 py-1">
+              <Languages className="w-3.5 h-3.5 text-cyan-400" />
+              <select
+                aria-label={t.selectLanguage}
+                value={language}
+                onChange={(e) => {
+                  setLanguage(e.target.value as LanguageCode);
+                  soundEngine.playSuccessChime();
+                }}
+                className="bg-transparent text-cyan-300 text-[11px] font-bold focus:outline-none cursor-pointer"
+              >
+                {SUPPORTED_LANGUAGES.map((l) => (
+                  <option key={l.code} value={l.code} className="bg-slate-900 text-white">
+                    {l.flag} {l.name} — {l.nativeName}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 1A. SEPARATE DEDICATED SOCIETY PAGE VIEW */}
       {!currentRole && isViewingSocietyPage && (
         <SocietyPortalPage

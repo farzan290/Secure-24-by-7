@@ -20,10 +20,18 @@ import {
   Sparkles,
   X,
   CheckCircle,
-  MessageSquare
+  MessageSquare,
+  Globe,
+  Languages
 } from 'lucide-react';
 import { Role, Society } from '../types';
 import { soundEngine } from '../services/audio';
+import {
+  useLanguage,
+  SUPPORTED_LANGUAGES,
+  SUPPORTED_COUNTRIES,
+  LanguageCode
+} from '../services/i18n';
 
 interface PresetSociety {
   name: string;
@@ -59,11 +67,12 @@ export const RoleSelectScreen: React.FC<Props> = ({
   onToggleAmbient,
   networkStatus
 }) => {
+  const { language, languageOption, country, setLanguage, setCountryByCode, t, tr } = useLanguage();
   const [copied, setCopied] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
 
   // Society Search & Autocomplete State
-  const [searchQuery, setSearchQuery] = useState(activeSociety?.name || '');
+  const [searchQuery, setSearchQuery] = useState(activeSociety ? tr(activeSociety.name) : '');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isSocietyConfirmed, setIsSocietyConfirmed] = useState(true);
   const [mgmtLockedWarning, setMgmtLockedWarning] = useState<string | null>(null);
@@ -78,13 +87,13 @@ export const RoleSelectScreen: React.FC<Props> = ({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Keep search query synced with active society if changed externally
+  // Keep search query synced with active society and active language
   useEffect(() => {
     if (activeSociety) {
-      setSearchQuery(activeSociety.name);
+      setSearchQuery(tr(activeSociety.name));
       setIsSocietyConfirmed(true);
     }
-  }, [activeSociety?.id]);
+  }, [activeSociety?.id, language]);
 
   // Click outside listener for dropdown
   useEffect(() => {
@@ -101,7 +110,10 @@ export const RoleSelectScreen: React.FC<Props> = ({
   const trimmedQuery = searchQuery.trim().toLowerCase();
 
   const matchingExisting = societies.filter(s =>
-    trimmedQuery ? s.name.toLowerCase().includes(trimmedQuery) : true
+    trimmedQuery
+      ? s.name.toLowerCase().includes(trimmedQuery) ||
+        tr(s.name).toLowerCase().includes(trimmedQuery)
+      : true
   );
 
   const matchingPresets = PRESET_SOCIETIES.filter(p =>
@@ -112,13 +124,15 @@ export const RoleSelectScreen: React.FC<Props> = ({
   ).slice(0, 6);
 
   const isExactMatch = societies.some(
-    s => s.name.toLowerCase() === trimmedQuery
+    s =>
+      s.name.toLowerCase() === trimmedQuery ||
+      tr(s.name).toLowerCase() === trimmedQuery
   );
 
   // Handle selecting an existing society
   const handleSelectExisting = (soc: Society) => {
     onSelectSociety(soc.id);
-    setSearchQuery(soc.name);
+    setSearchQuery(tr(soc.name));
     setIsSocietyConfirmed(true);
     setMgmtLockedWarning(null);
     setIsDropdownOpen(false);
@@ -197,19 +211,19 @@ export const RoleSelectScreen: React.FC<Props> = ({
       name: trimmed,
       provinceState: newCustomProvince.trim() || 'Federal District',
       city: newCustomCity.trim() || 'Metropolis',
-      country: 'Pakistan',
-      continent: 'Asia',
+      country: country.name,
+      continent: country.continent,
       completeAddress: newCustomAddress.trim() || `${trimmed}, Main Avenue`,
       houseCount: 95,
       gateCount: 2,
       guardCount: 6,
       emergencyContacts: {
-        police: '15',
-        fire: '16',
-        ambulance: '1122',
-        securityChief: '+92-300-5544332'
+        police: country.emergencyContacts.police,
+        fire: country.emergencyContacts.fire,
+        ambulance: country.emergencyContacts.ambulance,
+        securityChief: `${country.dialCode}-300-5544332`
       },
-      managementContact: '+92-21-39887766 (Security Office)',
+      managementContact: `${country.dialCode}-21-39887766 (Security Office)`,
       ownerName: 'Board of Governors',
       securityScore: 90,
       securityStatus: 'EXCELLENT'
@@ -255,14 +269,17 @@ export const RoleSelectScreen: React.FC<Props> = ({
     }
   };
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between selection:bg-cyan-500 selection:text-white relative overflow-hidden">
+    <div
+      dir={languageOption.dir}
+      className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between selection:bg-cyan-500 selection:text-white relative overflow-hidden"
+    >
       {/* Background visual security grid */}
       <div className="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] opacity-40 pointer-events-none" />
       <div className="absolute -top-40 -left-40 w-96 h-96 bg-cyan-600/15 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-blue-600/15 rounded-full blur-3xl pointer-events-none" />
 
       {/* Top Bar Header */}
-      <header className="relative z-10 border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md px-6 py-4 flex items-center justify-between">
+      <header className="relative z-10 border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md px-6 py-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-900/30 border border-cyan-400/30">
             <Shield className="w-5 h-5 text-white" />
@@ -270,16 +287,61 @@ export const RoleSelectScreen: React.FC<Props> = ({
           <div>
             <div className="flex items-center space-x-2">
               <span className="font-bold tracking-wider text-slate-100 text-lg uppercase font-mono">
-                Secure 24 by 7
+                {t.appTitle}
+              </span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-cyan-300 border border-slate-700">
+                {country.flag} {country.name} • {languageOption.nativeName}
               </span>
             </div>
             <p className="text-xs text-slate-400 font-medium truncate max-w-xs md:max-w-md">
-              {activeSociety.name} • {activeSociety.city}
+              {tr(activeSociety.name)} • {tr(activeSociety.city)}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex flex-wrap items-center gap-2.5">
+          {/* Quick Header Country Dropdown */}
+          <div className="flex items-center space-x-1.5 bg-slate-900/90 border border-slate-700/80 rounded-lg px-2.5 py-1.5 text-xs">
+            <Globe className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" />
+            <select
+              id="header-country-select"
+              aria-label={t.selectCountry}
+              value={country.code}
+              onChange={(e) => {
+                setCountryByCode(e.target.value, false);
+                soundEngine.playSuccessChime();
+              }}
+              className="bg-transparent text-slate-200 font-medium focus:outline-none cursor-pointer text-xs"
+            >
+              {SUPPORTED_COUNTRIES.map((c) => (
+                <option key={c.code} value={c.code} className="bg-slate-900 text-white">
+                  {c.flag} {c.name} ({c.dialCode})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Quick Header Language Dropdown */}
+          <div className="flex items-center space-x-1.5 bg-slate-900/90 border border-cyan-700/60 rounded-lg px-2.5 py-1.5 text-xs">
+            <Languages className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" />
+            <select
+              id="header-language-select"
+              aria-label={t.selectLanguage}
+              value={language}
+              onChange={(e) => {
+                setLanguage(e.target.value as LanguageCode);
+                soundEngine.playSuccessChime();
+              }}
+              className="bg-transparent text-cyan-300 font-semibold focus:outline-none cursor-pointer text-xs"
+            >
+              {SUPPORTED_LANGUAGES.map((l) => (
+                <option key={l.code} value={l.code} className="bg-slate-900 text-white">
+                  {l.flag} {l.name} — {l.nativeName}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {/* View Dedicated Society Page */}
           {onViewSocietyPage && (
             <button
@@ -289,7 +351,7 @@ export const RoleSelectScreen: React.FC<Props> = ({
               title={`Open separate dedicated page for ${activeSociety.name}`}
             >
               <Building2 className="w-4 h-4 text-emerald-400" />
-              <span className="hidden sm:inline font-semibold">Separate Society Page</span>
+              <span className="hidden sm:inline font-semibold">{t.separateSocietyPage}</span>
             </button>
           )}
 
@@ -314,9 +376,9 @@ export const RoleSelectScreen: React.FC<Props> = ({
               <VolumeX className="w-4 h-4" />
             )}
             <div className="flex flex-col text-left">
-              <span className="hidden sm:inline text-xs font-semibold leading-tight">Security Music</span>
+              <span className="hidden sm:inline text-xs font-semibold leading-tight">{t.securityMusic}</span>
               <span className="hidden sm:inline text-[9px] font-mono text-cyan-400/80 leading-none">
-                {isAmbientPlaying ? 'MUSIC ACTIVE' : 'MUTED'}
+                {isAmbientPlaying ? t.musicActive : t.muted}
               </span>
             </div>
           </button>
@@ -327,29 +389,125 @@ export const RoleSelectScreen: React.FC<Props> = ({
               networkStatus === 'ONLINE' ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
             }`} />
             <span className="text-slate-300 font-mono">
-              {networkStatus === 'ONLINE' ? 'SYSTEM ONLINE' : 'WEAK NETWORK'}
+              {networkStatus === 'ONLINE' ? t.systemOnline : t.weakNetwork}
             </span>
           </div>
         </div>
       </header>
 
       {/* Main Content Area */}
-      <main className="relative z-10 max-w-5xl mx-auto w-full px-6 py-12 flex-1 flex flex-col justify-center items-center text-center">
+      <main className="relative z-10 max-w-5xl mx-auto w-full px-6 py-10 flex-1 flex flex-col justify-center items-center text-center">
         {/* Title & Subtitle */}
-        <div className="mb-8 max-w-2xl">
+        <div className="mb-7 max-w-2xl">
           <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-slate-900/90 border border-slate-800 text-xs text-slate-300 mb-4 shadow-sm">
             <Radio className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
-            <span>Commercial Access Control &amp; Gate Intelligence</span>
+            <span>{t.heroBadge}</span>
           </div>
           <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white mb-3 font-mono">
-            SECURE 24 BY 7
+            {t.heroTitle}
           </h1>
           <p className="text-base sm:text-lg text-slate-300 font-medium">
-            Smart Security • Intelligent Access • Complete Protection
+            {t.heroSubtitle}
           </p>
           <p className="text-xs text-slate-400 mt-2">
-            Select or enter your society name below to initialize access terminals
+            {t.heroInstruction}
           </p>
+        </div>
+
+        {/* INTERNATIONAL COUNTRY & 7-LANGUAGE SELECTION PANEL ON MAIN DASHBOARD */}
+        <div
+          id="dashboard-country-language-panel"
+          className="w-full max-w-4xl mb-6 bg-slate-900/90 border border-cyan-800/60 hover:border-cyan-600/70 rounded-2xl p-5 shadow-xl backdrop-blur-md text-left transition-all"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 mb-4 border-b border-slate-800/80">
+            <div className="flex items-center space-x-3">
+              <div className="w-9 h-9 rounded-xl bg-cyan-950/90 border border-cyan-600/50 flex items-center justify-center text-cyan-400">
+                <Globe className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-xs sm:text-sm font-bold text-white uppercase tracking-wider font-mono flex items-center gap-2">
+                  <span>{t.localizationTitle}</span>
+                  <span className="text-[10px] bg-cyan-950 text-cyan-300 px-2 py-0.5 rounded-full border border-cyan-700/50">
+                    7 LANGUAGES
+                  </span>
+                </h2>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {t.localizationSubtitle}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 text-[11px] font-mono text-emerald-300 bg-emerald-950/40 border border-emerald-700/50 px-3 py-1.5 rounded-lg self-start sm:self-center">
+              <span>{country.flag} {country.name} ({country.dialCode})</span>
+              <span>•</span>
+              <span>{languageOption.flag} {languageOption.nativeName}</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+            {/* Country Selector Dropdown */}
+            <div className="md:col-span-4">
+              <label
+                htmlFor="main-country-select"
+                className="block text-[11px] font-mono uppercase text-slate-400 mb-1.5 font-semibold"
+              >
+                {t.countryLabel}
+              </label>
+              <div className="relative">
+                <select
+                  id="main-country-select"
+                  value={country.code}
+                  onChange={(e) => {
+                    setCountryByCode(e.target.value, true);
+                    soundEngine.playSuccessChime();
+                  }}
+                  className="w-full bg-slate-950 border border-slate-700 hover:border-cyan-500/70 focus:border-cyan-400 rounded-xl px-3.5 py-2.5 text-xs text-white font-semibold focus:outline-none transition-colors cursor-pointer"
+                >
+                  {SUPPORTED_COUNTRIES.map((c) => (
+                    <option key={c.code} value={c.code} className="bg-slate-900 text-white">
+                      {c.flag} {c.name} ({c.nativeName}) — {c.dialCode}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* 7 International Languages Interactive Selector Buttons */}
+            <div className="md:col-span-8">
+              <label className="block text-[11px] font-mono uppercase text-slate-400 mb-1.5 font-semibold">
+                {t.selectLanguage}
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-1.5">
+                {SUPPORTED_LANGUAGES.map((lang) => {
+                  const isSelected = language === lang.code;
+                  return (
+                    <button
+                      key={lang.code}
+                      id={`lang-btn-${lang.code}`}
+                      type="button"
+                      onClick={() => {
+                        setLanguage(lang.code);
+                        soundEngine.playSuccessChime();
+                      }}
+                      className={`px-2.5 py-2 rounded-xl border text-center transition-all flex flex-col items-center justify-center ${
+                        isSelected
+                          ? 'bg-cyan-600/25 border-cyan-400 text-white shadow-md shadow-cyan-950/60'
+                          : 'bg-slate-950/90 border-slate-800 text-slate-300 hover:border-slate-600 hover:bg-slate-900'
+                      }`}
+                    >
+                      <span className="text-sm leading-none mb-1">{lang.flag}</span>
+                      <span className="text-[11px] font-bold leading-tight block truncate max-w-full">
+                        {lang.name.split(' ')[0]}
+                      </span>
+                      <span className="text-[10px] text-cyan-300/90 font-medium leading-tight block truncate max-w-full">
+                        {lang.nativeName}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* SOCIETY NAME SELECTION & REGISTRATION COMPONENT */}
@@ -360,14 +518,14 @@ export const RoleSelectScreen: React.FC<Props> = ({
                 <Building2 className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-sm font-bold text-white uppercase tracking-wider font-mono flex items-center space-x-2">
-                  <span>Society Selection &amp; Registration</span>
+                <h2 className="text-sm font-bold text-white uppercase tracking-wider font-mono flex items-center gap-2 flex-wrap">
+                  <span>{t.societySelectionTitle}</span>
                   <span className="text-[10px] bg-blue-900/50 text-blue-300 px-2 py-0.5 rounded-full border border-blue-700/40">
-                    REQUIRED FOR MANAGEMENT
+                    {t.requiredForManagement}
                   </span>
                 </h2>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  Type your society name to search or add a new gated enclave. Connected live across guards, gates, and resident rosters.
+                  {t.societySelectionDesc}
                 </p>
               </div>
             </div>
@@ -380,7 +538,7 @@ export const RoleSelectScreen: React.FC<Props> = ({
               className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase flex items-center space-x-1.5 shadow-md shadow-emerald-950 transition-all self-start sm:self-center"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>Register New Society</span>
+              <span>{t.registerNewSociety}</span>
             </button>
           </div>
 
@@ -402,7 +560,7 @@ export const RoleSelectScreen: React.FC<Props> = ({
                     }
                   }}
                   onFocus={() => setIsDropdownOpen(true)}
-                  placeholder="Type society name (e.g. AECS / AEECHS, Grand Horizon, Green Valley...)"
+                  placeholder={t.searchSocietyPlaceholder}
                   className={`w-full bg-slate-950 border rounded-xl pl-10 pr-10 py-3 text-sm text-white placeholder-slate-500 font-medium focus:outline-none transition-all ${
                     mgmtLockedWarning
                       ? 'border-amber-500 ring-2 ring-amber-500/30'
@@ -450,7 +608,7 @@ export const RoleSelectScreen: React.FC<Props> = ({
                 className="px-4 py-3 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs uppercase flex items-center space-x-1.5 shadow-md shadow-cyan-950 transition-all whitespace-nowrap"
               >
                 <Check className="w-4 h-4" />
-                <span>Confirm Society</span>
+                <span>{t.confirmSociety}</span>
               </button>
             </div>
 
@@ -470,15 +628,15 @@ export const RoleSelectScreen: React.FC<Props> = ({
                       </div>
                       <div>
                         <span className="font-bold block text-white group-hover:text-cyan-200">
-                          Register New Society: &ldquo;{searchQuery.trim()}&rdquo;
+                          {t.registerNewSociety}: &ldquo;{searchQuery.trim()}&rdquo;
                         </span>
                         <span className="text-[10px] text-slate-400">
-                          Click to provision starter gates, resident directory &amp; barrier controls
+                          {t.provisionStarterDesc}
                         </span>
                       </div>
                     </div>
                     <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-cyan-900/80 text-cyan-300 border border-cyan-700/50">
-                      CREATE NEW
+                      {t.createNewBadge}
                     </span>
                   </button>
                 )}
@@ -486,8 +644,8 @@ export const RoleSelectScreen: React.FC<Props> = ({
                 {/* Section Header: Matching Registered Societies */}
                 {matchingExisting.length > 0 && (
                   <div className="px-3 py-1.5 bg-slate-950/80 text-[10px] font-mono text-slate-400 font-semibold uppercase tracking-wider flex items-center justify-between">
-                    <span>Registered Societies ({matchingExisting.length})</span>
-                    <span className="text-emerald-400">Ready to Connect</span>
+                    <span>{t.registeredSocieties} ({matchingExisting.length})</span>
+                    <span className="text-emerald-400">{t.readyToConnect}</span>
                   </div>
                 )}
                 {matchingExisting.map((soc) => (
@@ -504,19 +662,19 @@ export const RoleSelectScreen: React.FC<Props> = ({
                     <div className="flex items-center space-x-2.5">
                       <Building2 className={`w-4 h-4 ${activeSociety?.id === soc.id ? 'text-emerald-400' : 'text-slate-400'}`} />
                       <div>
-                        <span className="font-bold block text-white">{soc.name}</span>
+                        <span className="font-bold block text-white">{tr(soc.name)}</span>
                         <span className="text-[10px] text-slate-400">
-                          {soc.city} • {soc.houseCount} Houses • {soc.gateCount} Gates
+                          {tr(soc.city)} • {soc.houseCount} {t.housesCountLabel} • {soc.gateCount} {t.gatesCountLabel}
                         </span>
                       </div>
                     </div>
                     {activeSociety?.id === soc.id ? (
                       <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-900 text-emerald-300 border border-emerald-700">
-                        ACTIVE
+                        {t.activeBadge}
                       </span>
                     ) : (
                       <span className="text-[10px] text-slate-400 group-hover:text-slate-200">
-                        Select →
+                        {t.selectAction}
                       </span>
                     )}
                   </button>
@@ -551,7 +709,7 @@ export const RoleSelectScreen: React.FC<Props> = ({
 
                 {matchingExisting.length === 0 && matchingPresets.length === 0 && (
                   <div className="p-4 text-center text-xs text-slate-400">
-                    No exact match found. Click &ldquo;Register New Society&rdquo; above to create it.
+                    No exact match found. Click &ldquo;{t.registerNewSociety}&rdquo; above to create it.
                   </div>
                 )}
               </div>
@@ -560,7 +718,7 @@ export const RoleSelectScreen: React.FC<Props> = ({
 
           {/* Quick Filter / Society Quick Pick Chips */}
           <div className="mt-3 flex flex-wrap items-center gap-1.5 text-xs">
-            <span className="text-[11px] text-slate-400 font-mono">Your Societies:</span>
+            <span className="text-[11px] text-slate-400 font-mono">{t.yourSocieties}</span>
             {societies.map((soc) => (
               <button
                 key={soc.id}
@@ -572,7 +730,7 @@ export const RoleSelectScreen: React.FC<Props> = ({
                     : 'bg-slate-950 text-slate-300 hover:bg-slate-800 border border-slate-800'
                 }`}
               >
-                {soc.name}
+                {tr(soc.name)}
               </button>
             ))}
           </div>
@@ -590,13 +748,13 @@ export const RoleSelectScreen: React.FC<Props> = ({
             <div className="mt-4 p-3.5 rounded-xl bg-emerald-950/40 border border-emerald-700/60 flex flex-wrap items-center justify-between gap-3 text-xs">
               <div className="flex items-center space-x-2 text-emerald-400 font-mono">
                 <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                <span className="font-bold">VERIFIED SOCIETY:</span>
-                <span className="text-white font-sans font-bold">{activeSociety.name}</span>
-                <span className="text-slate-400 text-[11px]">({activeSociety.city}, {activeSociety.provinceState || 'Pakistan'})</span>
+                <span className="font-bold">{t.verifiedSociety}</span>
+                <span className="text-white font-sans font-bold">{tr(activeSociety.name)}</span>
+                <span className="text-slate-400 text-[11px]">({tr(activeSociety.city)}, {tr(activeSociety.provinceState || country.name)})</span>
               </div>
               <div className="flex items-center space-x-2 text-[11px] text-slate-300 font-mono">
-                <span className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800">{activeSociety.gateCount || 2} Gates</span>
-                <span className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800">{activeSociety.houseCount || 100}+ Houses</span>
+                <span className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800">{activeSociety.gateCount || 2} {t.gatesCountLabel}</span>
+                <span className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800">{activeSociety.houseCount || 100}+ {t.housesCountLabel}</span>
                 {onViewSocietyPage && (
                   <button
                     type="button"
@@ -604,7 +762,7 @@ export const RoleSelectScreen: React.FC<Props> = ({
                     className="px-3 py-1 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-sans font-bold text-xs flex items-center space-x-1.5 shadow-md shadow-cyan-950 transition-all ml-1"
                   >
                     <ExternalLink className="w-3.5 h-3.5" />
-                    <span>View {activeSociety.name.split(' ')[0]} Page</span>
+                    <span>{t.viewSocietyPageBtn}</span>
                   </button>
                 )}
               </div>
@@ -624,20 +782,20 @@ export const RoleSelectScreen: React.FC<Props> = ({
               <div className="w-12 h-12 rounded-xl bg-cyan-950/80 border border-cyan-700/50 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform text-cyan-400">
                 <Shield className="w-6 h-6" />
               </div>
-              <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center justify-between mb-1 gap-2">
                 <h3 className="text-lg font-bold text-white group-hover:text-cyan-300 transition-colors">
-                  Security Guard
+                  {t.guardRoleTitle}
                 </h3>
                 <span className="text-[9px] font-mono font-semibold px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800/60">
-                  GATE CONSOLE
+                  {t.guardRoleBadge}
                 </span>
               </div>
               <p className="text-xs text-slate-400 leading-relaxed mb-4">
-                Fast gate operations, ANPR vehicle scan, visitor check-in, electronic barrier controls &amp; resident confirmation.
+                {t.guardRoleDesc}
               </p>
             </div>
             <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-cyan-400 font-medium">
-              <span>Verify ID &amp; Enter</span>
+              <span>{t.guardRoleCta}</span>
               <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </div>
           </button>
@@ -652,23 +810,23 @@ export const RoleSelectScreen: React.FC<Props> = ({
               <div className="w-12 h-12 rounded-xl bg-blue-950/80 border border-blue-700/50 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform text-blue-400">
                 <Building2 className="w-6 h-6" />
               </div>
-              <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center justify-between mb-1 gap-2">
                 <h3 className="text-lg font-bold text-white group-hover:text-blue-300 transition-colors">
-                  Management
+                  {t.mgmtRoleTitle}
                 </h3>
                 <span className="text-[9px] font-mono font-semibold px-2 py-0.5 rounded bg-blue-950 text-blue-300 border border-blue-800/60 flex items-center space-x-1">
                   <Building2 className="w-2.5 h-2.5 text-blue-400" />
-                  <span>ADMIN</span>
+                  <span>{t.mgmtRoleBadge}</span>
                 </span>
               </div>
               <p className="text-xs text-slate-400 leading-relaxed mb-4">
-                Command center, guard rosters, resident directory, incident reviews, CCTV grid, reports &amp; Secure AI engine.
+                {t.mgmtRoleDesc}
               </p>
             </div>
             <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs font-medium text-blue-400">
               <span className="font-semibold flex items-center space-x-1.5">
                 <Lock className="w-3 h-3 text-blue-400" />
-                <span>Enter Admin</span>
+                <span>{t.mgmtRoleCta}</span>
               </span>
               <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </div>
@@ -684,20 +842,20 @@ export const RoleSelectScreen: React.FC<Props> = ({
               <div className="w-12 h-12 rounded-xl bg-amber-950/80 border border-amber-700/50 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform text-amber-400">
                 <Crown className="w-6 h-6" />
               </div>
-              <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center justify-between mb-1 gap-2">
                 <h3 className="text-lg font-bold text-white group-hover:text-amber-300 transition-colors">
-                  Owner Suite
+                  {t.ownerRoleTitle}
                 </h3>
                 <span className="text-[9px] font-mono font-semibold px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-800/60">
-                  MASTER SUITE
+                  {t.ownerRoleBadge}
                 </span>
               </div>
               <p className="text-xs text-slate-400 leading-relaxed mb-4">
-                Multi-society governance, security scores, executive audit logs, system health &amp; hardware integrations.
+                {t.ownerRoleDesc}
               </p>
             </div>
             <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-amber-400 font-medium">
-              <span>Master Login</span>
+              <span>{t.ownerRoleCta}</span>
               <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </div>
           </button>
@@ -712,20 +870,20 @@ export const RoleSelectScreen: React.FC<Props> = ({
               <div className="w-12 h-12 rounded-xl bg-purple-950/80 border border-purple-700/50 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform text-purple-400">
                 <MessageSquare className="w-6 h-6" />
               </div>
-              <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center justify-between mb-1 gap-2">
                 <h3 className="text-lg font-bold text-white group-hover:text-purple-300 transition-colors">
-                  RMP Portal
+                  {t.rmpRoleTitle}
                 </h3>
                 <span className="text-[9px] font-mono font-semibold px-2 py-0.5 rounded bg-purple-950 text-purple-300 border border-purple-800/60">
-                  RESIDENT
+                  {t.rmpRoleBadge}
                 </span>
               </div>
               <p className="text-xs text-slate-400 leading-relaxed mb-4">
-                Resident pre-notifications for guests, food deliveries &amp; service staff with car number plate auto-catch.
+                {t.rmpRoleDesc}
               </p>
             </div>
             <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-purple-400 font-medium">
-              <span>Enter Resident RMP</span>
+              <span>{t.rmpRoleCta}</span>
               <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </div>
           </button>
@@ -735,22 +893,22 @@ export const RoleSelectScreen: React.FC<Props> = ({
         <div className="mt-12 flex flex-wrap items-center justify-center gap-6 text-xs text-slate-400">
           <div className="flex items-center space-x-2">
             <Lock className="w-3.5 h-3.5 text-emerald-400" />
-            <span>End-to-End Encrypted Access</span>
+            <span>{t.trustEncrypted}</span>
           </div>
           <div className="flex items-center space-x-2">
             <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Multi-Tenant Society Isolation</span>
+            <span>{t.trustMultiTenant}</span>
           </div>
           <div className="flex items-center space-x-2">
             <Shield className="w-3.5 h-3.5 text-blue-400" />
-            <span>3-Attempt Intrusion Lockout Protection</span>
+            <span>{t.trustLockout}</span>
           </div>
         </div>
       </main>
 
       {/* Footer */}
       <footer className="relative z-10 border-t border-slate-900 bg-slate-950/80 px-6 py-4 text-center text-xs text-slate-500 font-mono">
-        SECURE 24 BY 7 • COMMERCIAL RESIDENTIAL GATE MANAGEMENT SYSTEM • PROTOCOL V4.2
+        {t.footerText}
       </footer>
 
       {/* Share / Chrome Guest Access Modal */}
@@ -905,9 +1063,9 @@ export const RoleSelectScreen: React.FC<Props> = ({
                 <Building2 className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-white font-mono">Register New Society</h3>
+                <h3 className="text-base font-bold text-white font-mono">{t.modalRegisterTitle}</h3>
                 <p className="text-xs text-slate-400">
-                  Provision gates, resident directories, and barrier controls for your society
+                  {t.modalRegisterSubtitle}
                 </p>
               </div>
             </div>
@@ -915,7 +1073,7 @@ export const RoleSelectScreen: React.FC<Props> = ({
             <form onSubmit={handleConfirmAddCustom} className="space-y-4">
               <div>
                 <label className="block text-xs font-mono font-semibold text-slate-300 mb-1.5 uppercase">
-                  Society / Enclave Name *
+                  {t.societyNameField}
                 </label>
                 <input
                   type="text"
@@ -930,7 +1088,7 @@ export const RoleSelectScreen: React.FC<Props> = ({
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-mono font-semibold text-slate-300 mb-1.5 uppercase">
-                    City *
+                    {t.cityField}
                   </label>
                   <input
                     type="text"
@@ -944,7 +1102,7 @@ export const RoleSelectScreen: React.FC<Props> = ({
 
                 <div>
                   <label className="block text-xs font-mono font-semibold text-slate-300 mb-1.5 uppercase">
-                    Province / State
+                    {t.provinceField}
                   </label>
                   <input
                     type="text"
@@ -958,7 +1116,7 @@ export const RoleSelectScreen: React.FC<Props> = ({
 
               <div>
                 <label className="block text-xs font-mono font-semibold text-slate-300 mb-1.5 uppercase">
-                  Complete Address / Main Boulevard
+                  {t.addressField}
                 </label>
                 <input
                   type="text"
@@ -970,10 +1128,10 @@ export const RoleSelectScreen: React.FC<Props> = ({
               </div>
 
               <div className="p-3 rounded-xl bg-slate-950 border border-cyan-900/30 text-xs text-slate-400 space-y-1">
-                <span className="font-semibold text-cyan-300 block font-mono">AUTOMATIC PROVISIONING:</span>
-                <p>• 2 Smart Barriers with ANPR cameras (North Main Gate &amp; Secondary Gate)</p>
-                <p>• Resident House directory initialized with vehicle plate verification</p>
-                <p>• Instant link to Security Guard console, Owner audit suite &amp; AI engine</p>
+                <span className="font-semibold text-cyan-300 block font-mono">{t.autoProvisionTitle}</span>
+                <p>{t.autoProvision1}</p>
+                <p>{t.autoProvision2}</p>
+                <p>{t.autoProvision3}</p>
               </div>
 
               <div className="pt-2 flex items-center justify-end space-x-3">
@@ -982,14 +1140,14 @@ export const RoleSelectScreen: React.FC<Props> = ({
                   onClick={() => setShowNewModal(false)}
                   className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition-colors"
                 >
-                  Cancel
+                  {t.cancelBtn}
                 </button>
                 <button
                   type="submit"
                   className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase flex items-center space-x-2 shadow-lg shadow-emerald-950 transition-all"
                 >
                   <CheckCircle2 className="w-4 h-4" />
-                  <span>Register &amp; Connect Society</span>
+                  <span>{t.registerAndConnectBtn}</span>
                 </button>
               </div>
             </form>
